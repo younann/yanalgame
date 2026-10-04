@@ -1,0 +1,65 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Rubik', 'Cairo', ui-rounded, system-ui, sans-serif;
+
+  --color-cream: #fff8f5;
+  --color-cream-border: #fff1e9;
+  --color-play: #007a55;
+  --color-play-dark: #005c40;
+  --color-sound: #f59e0b;
+  --color-sound-dark: #d97706;
+  --color-back: #ffe4d6;
+  --color-back-dark: #fcd2bb;
+  --color-back-ink: #7c2d12;
+
+  --shadow-clay: 0 10px 24px -4px rgb(0 0 0 / 0.06), 0 4px 12px rgb(0 0 0 / 0.04);
+}
+
+html,
+body {
+  background: var(--color-cream);
+  overscroll-behavior: none;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  color: #3b2a22;
+  -webkit-font-smoothing: antialiased;
+  /* Toddler-proofing: no text selection, callouts, or tap flashes */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+img {
+  -webkit-user-drag: none;
+}
+
+@keyframes hop {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-28px) scale(1.05);
+  }
+  55% {
+    transform: translateY(0) scale(0.97);
+  }
+  75% {
+    transform: translateY(-12px);
+  }
+}
+
+.animate-hop {
+  animation: hop 0.8s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-hop {
+    animation: none;
+  }
+}
