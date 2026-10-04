@@ -29,7 +29,13 @@ function AnimalVideo({ animal }: { animal: AnimalItem }) {
   // Rebuilt when the connection comes back, so videos recover after offline.
   const player = useYouTubePlayer(playerHostRef, videoId, online)
 
-  const nextVideo = () => setVideoId(getRandomVideoForAnimal(animal.id))
+  const nextVideo = () => {
+    const id = getRandomVideoForAnimal(animal.id)
+    // Load inside the tap itself — iOS only allows sound during a user gesture.
+    player.loadNow(id)
+    if (player.muted) player.unmute()
+    setVideoId(id)
+  }
   const ended = player.state === PlayerState.ENDED
 
   // Desktop: Esc goes back to the grid.
@@ -93,6 +99,17 @@ function AnimalVideo({ animal }: { animal: AnimalItem }) {
               <span aria-hidden className="text-6xl">📶</span>
               <p className="px-4 text-lg font-bold">بدنا إنترنت للفيديو — بس صوت الحيوان شغّال!</p>
             </div>
+          )}
+          {online && player.muted && !ended && (
+            // iOS only autoplays muted — one big tap turns the sound on.
+            <button
+              type="button"
+              aria-label="شغّل الصوت"
+              onClick={player.unmute}
+              className="absolute start-3 top-3 flex size-20 cursor-pointer items-center justify-center rounded-full border-4 border-white bg-sound text-4xl shadow-clay transition-transform duration-150 active:scale-90 motion-safe:animate-pulse"
+            >
+              🔊
+            </button>
           )}
           {online && ended && (
             // Covers YouTube's end screen so no suggested videos are tappable.

@@ -5,6 +5,10 @@ interface YTPlayer {
   loadVideoById(videoId: string): void
   playVideo(): void
   pauseVideo(): void
+  mute(): void
+  unMute(): void
+  isMuted(): boolean
+  setVolume(volume: number): void
   getPlayerState(): number
   destroy(): void
 }
@@ -21,6 +25,7 @@ interface YTNamespace {
       events?: {
         onReady?: () => void
         onStateChange?: (event: { data: number }) => void
+        onAutoplayBlocked?: () => void
       }
     },
   ) => YTPlayer
@@ -39,6 +44,14 @@ export const PlayerState = {
   PAUSED: 2,
   BUFFERING: 3,
 } as const
+
+/**
+ * iPhone / iPad (incl. iPadOS posing as a Mac) never autoplay embedded video
+ * with sound — only muted. Start muted there so playback begins immediately.
+ */
+const IS_IOS =
+  /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
 
 let apiPromise: Promise<YTNamespace> | null = null
 
@@ -81,6 +94,7 @@ export function useYouTubePlayer(
   const latestVideoRef = useRef(videoId)
   const loadedVideoRef = useRef('')
   const [state, setState] = useState<number>(-1)
+  const [muted, setMuted] = useState(IS_IOS)
 
   useEffect(() => {
     let cancelled = false
@@ -90,6 +104,16 @@ export function useYouTubePlayer(
     // The API replaces the element it's given, so hand it a disposable child.
     const mount = document.createElement('div')
     host.appendChild(mount)
+
+    let fallbackTimer: number | undefined
+    // Browser refused to autoplay with sound → play muted instead.
+    const playMuted = () => {
+      const player = playerRef.current
+      if (!player) return
+      player.mute()
+      player.playVideo()
+      setMuted(true)
+    }
 
     loadYouTubeApi()
       .then((YT) => {
@@ -106,6 +130,7 @@ export function useYouTubePlayer(
             rel: 0,
             modestbranding: 1,
             playsinline: 1,
+            mute: IS_IOS ? 1 : 0,
             iv_load_policy: 3, // no annotations
             fs: 1,
             hl: 'ar',
@@ -118,8 +143,19 @@ export function useYouTubePlayer(
                 loadedVideoRef.current = latestVideoRef.current
                 playerRef.current?.loadVideoById(latestVideoRef.current)
               }
+              playerRef.current?.playVideo()
+              // Some browsers block silently instead of firing onAutoplayBlocked.
+              fallbackTimer = window.setTimeout(() => {
+                const s = playerRef.current?.getPlayerState()
+                if (s !== PlayerState.PLAYING && s !== PlayerState.BUFFERING) playMuted()
+              }, 2000)
             },
-            onStateChange: (event) => setState(event.data),
+            onAutoplayBlocked: playMuted,
+            onStateChange: (event) => {
+              setState(event.data)
+              // Catch unmutes done through YouTube's own controls too.
+              setMuted(playerRef.current?.isMuted() ?? false)
+            },
           },
         })
       })
@@ -129,6 +165,7 @@ export function useYouTubePlayer(
 
     return () => {
       cancelled = true
+      window.clearTimeout(fallbackTimer)
       readyRef.current = false
       playerRef.current?.destroy()
       playerRef.current = null
@@ -148,6 +185,24 @@ export function useYouTubePlayer(
     state,
     play: () => playerRef.current?.playVideo(),
     pause: () => playerRef.current?.pauseVideo(),
+    muted,
+    /** Switch video right now — call from a tap so iOS keeps the sound on. */
+    loadNow: (id: string) => {
+      latestVideoRef.current = id
+      if (readyRef.current && playerRef.current) {
+        loadedVideoRef.current = id
+        playerRef.current.loadVideoById(id)
+      }
+    },
+    /** Must run inside a tap handler — that's what lets iOS play sound. */
+    unmute: () => {
+      const player = playerRef.current
+      if (!player) return
+      player.unMute()
+      player.setVolume(100)
+      player.playVideo()
+      setMuted(false)
+    },
     isPlaying: () => playerRef.current?.getPlayerState() === PlayerState.PLAYING,
   }
 }
