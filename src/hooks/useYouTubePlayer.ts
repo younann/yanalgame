@@ -44,7 +44,7 @@ let apiPromise: Promise<YTNamespace> | null = null
 
 function loadYouTubeApi(): Promise<YTNamespace> {
   if (apiPromise) return apiPromise
-  apiPromise = new Promise((resolve) => {
+  apiPromise = new Promise((resolve, reject) => {
     if (window.YT?.Player) {
       resolve(window.YT)
       return
@@ -56,6 +56,12 @@ function loadYouTubeApi(): Promise<YTNamespace> {
     }
     const script = document.createElement('script')
     script.src = 'https://www.youtube.com/iframe_api'
+    script.onerror = () => {
+      // e.g. opened offline — forget the failure so the next attempt retries.
+      script.remove()
+      apiPromise = null
+      reject(new Error('YouTube IFrame API failed to load'))
+    }
     document.head.appendChild(script)
   })
   return apiPromise
@@ -68,6 +74,7 @@ function loadYouTubeApi(): Promise<YTNamespace> {
 export function useYouTubePlayer(
   containerRef: RefObject<HTMLDivElement | null>,
   videoId: string,
+  enabled = true,
 ) {
   const playerRef = useRef<YTPlayer | null>(null)
   const readyRef = useRef(false)
@@ -78,43 +85,47 @@ export function useYouTubePlayer(
   useEffect(() => {
     let cancelled = false
     const host = containerRef.current
-    if (!host) return
+    if (!host || !enabled) return
 
     // The API replaces the element it's given, so hand it a disposable child.
     const mount = document.createElement('div')
     host.appendChild(mount)
 
-    loadYouTubeApi().then((YT) => {
-      if (cancelled) return
-      loadedVideoRef.current = latestVideoRef.current
-      playerRef.current = new YT.Player(mount, {
-        host: 'https://www.youtube-nocookie.com',
-        videoId: loadedVideoRef.current,
-        width: '100%',
-        height: '100%',
-        playerVars: {
-          autoplay: 1,
-          controls: 1,
-          rel: 0,
-          modestbranding: 1,
-          playsinline: 1,
-          iv_load_policy: 3, // no annotations
-          fs: 1,
-          hl: 'ar',
-        },
-        events: {
-          onReady: () => {
-            readyRef.current = true
-            // The video may have changed while the player was booting.
-            if (loadedVideoRef.current !== latestVideoRef.current) {
-              loadedVideoRef.current = latestVideoRef.current
-              playerRef.current?.loadVideoById(latestVideoRef.current)
-            }
+    loadYouTubeApi()
+      .then((YT) => {
+        if (cancelled) return
+        loadedVideoRef.current = latestVideoRef.current
+        playerRef.current = new YT.Player(mount, {
+          host: 'https://www.youtube-nocookie.com',
+          videoId: loadedVideoRef.current,
+          width: '100%',
+          height: '100%',
+          playerVars: {
+            autoplay: 1,
+            controls: 1,
+            rel: 0,
+            modestbranding: 1,
+            playsinline: 1,
+            iv_load_policy: 3, // no annotations
+            fs: 1,
+            hl: 'ar',
           },
-          onStateChange: (event) => setState(event.data),
-        },
+          events: {
+            onReady: () => {
+              readyRef.current = true
+              // The video may have changed while the player was booting.
+              if (loadedVideoRef.current !== latestVideoRef.current) {
+                loadedVideoRef.current = latestVideoRef.current
+                playerRef.current?.loadVideoById(latestVideoRef.current)
+              }
+            },
+            onStateChange: (event) => setState(event.data),
+          },
+        })
       })
-    })
+      .catch(() => {
+        // Offline: the screen shows its own message; we retry when back online.
+      })
 
     return () => {
       cancelled = true
@@ -123,7 +134,7 @@ export function useYouTubePlayer(
       playerRef.current = null
       host.replaceChildren()
     }
-  }, [containerRef])
+  }, [containerRef, enabled])
 
   useEffect(() => {
     latestVideoRef.current = videoId

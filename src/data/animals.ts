@@ -94,7 +94,7 @@ export const ANIMALS: AnimalItem[] = [
     id: 'horse',
     nameArabic: 'حصان',
     emoji: '🐴',
-    soundCue: 'إيييهه! (صهيل الحصان)',
+    soundCue: 'إيييهه!',
     soundAudioUrl: '/sounds/horse.mp3',
     imageUrl: '/animals/horse.jpg',
     coPlayTip: 'اعملوا صوت حوافر الحصان بإيديكم على الطاولة: تِك تَك تِك تَك!',

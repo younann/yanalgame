@@ -31,3 +31,9 @@ sounds were trimmed, faded and loudness-normalized (`ffmpeg loudnorm`).
 ## Videos
 
 Embedded from YouTube (`youtube-nocookie.com`); IDs and titles are in `src/data/animals.ts`.
+
+## App icon
+
+`public/logo.svg` (and the generated PNG icons) use the cow face from
+[Twemoji](https://github.com/jdecked/twemoji) — © Twitter, Inc and other contributors,
+graphics licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).

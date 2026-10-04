@@ -38,6 +38,122 @@ img {
   -webkit-user-drag: none;
 }
 
+/* ───────────── Home grid ─────────────
+   Always sized so all 8 animals fit the screen without scrolling:
+   portrait → 2 columns × 4 rows, landscape → 4 columns × 2 rows. */
+.animal-grid {
+  --pad: 1rem;
+  --gap: 1rem;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--gap);
+  width: 100%;
+  max-width: min(28rem, calc((100dvh - 2 * var(--pad) - 3 * var(--gap)) / 2 + var(--gap)));
+}
+
+/* Tablet portrait: 2 big columns; card = (height − padding − 3 gaps) / 4 */
+@media (min-width: 600px) and (orientation: portrait) {
+  .animal-grid {
+    --pad: 1.5rem;
+    --gap: 1.5rem;
+    max-width: min(44rem, calc((100dvh - 2 * var(--pad) - 3 * var(--gap)) / 2 + var(--gap)));
+  }
+}
+
+/* Landscape (tablet / desktop / phone sideways): 4 columns;
+   card = (height − padding − 1 gap) / 2 */
+@media (min-width: 600px) and (orientation: landscape) {
+  .animal-grid {
+    --pad: 1.5rem;
+    --gap: 1.5rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    max-width: min(68rem, calc(2 * (100dvh - 2 * var(--pad) - var(--gap)) + 3 * var(--gap)));
+  }
+}
+
+@media (min-width: 600px) and (orientation: landscape) and (max-height: 540px) {
+  .animal-grid {
+    --pad: 1rem;
+    --gap: 1rem;
+  }
+}
+
+/* ───────────── Video screen ─────────────
+   Portrait: one stacked column. Landscape (tablet / desktop / phone):
+   controls column at the start (right, RTL) + video filling the rest. */
+.video-layout {
+  display: grid;
+  gap: 1rem;
+  width: 100%;
+  max-width: 28rem;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: 'header' 'video' 'next' 'sound' 'tip';
+  align-content: start;
+}
+/* Stacked: the controls wrapper disappears so its children join the grid. */
+.video-layout > .area-controls { display: contents; }
+.area-header { grid-area: header; }
+.area-video { grid-area: video; }
+.area-next { grid-area: next; }
+.area-sound { grid-area: sound; }
+.area-tip { grid-area: tip; }
+
+/* Tablet portrait (iPad): wider column, video gets the extra room. */
+@media (min-width: 640px) and (orientation: portrait) {
+  .video-layout {
+    max-width: 46rem;
+    gap: 1.5rem;
+  }
+}
+
+@media (min-width: 640px) and (orientation: landscape) {
+  .video-screen {
+    --pad: 1.5rem;
+    align-items: center;
+    padding-block: var(--pad);
+  }
+  .video-layout {
+    max-width: 96rem;
+    gap: 1.5rem;
+    grid-template-columns: minmax(16rem, 22rem) minmax(0, 1fr);
+    grid-template-areas: 'controls video';
+    align-items: center;
+    align-content: center;
+  }
+  .video-layout > .area-controls {
+    grid-area: controls;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+  .video-layout > .area-video {
+    justify-self: center;
+    /* As wide as possible while the 16:9 frame still fits the screen height. */
+    width: min(100%, calc((100dvh - 2 * var(--pad)) * 16 / 9));
+  }
+}
+
+/* Short landscape screens (phones turned sideways): tighten everything. */
+@media (min-width: 640px) and (orientation: landscape) and (max-height: 540px) {
+  .video-screen {
+    --pad: 0.75rem;
+  }
+  .video-layout {
+    gap: 0.75rem;
+    grid-template-columns: minmax(13rem, 16rem) minmax(0, 1fr);
+  }
+  .video-layout > .area-controls {
+    gap: 0.75rem;
+  }
+  .video-layout .compact-hide {
+    display: none;
+  }
+  .video-layout .compact-btn {
+    min-height: 60px;
+    font-size: 1.375rem;
+  }
+}
+
 @keyframes hop {
   0%,
   100% {
