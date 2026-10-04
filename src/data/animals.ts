@@ -1,18 +1,7 @@
-export interface AnimalItem {
-  id: string
-  nameArabic: string
-  emoji: string
-  soundCue: string
-  /** Real recording of the animal. Rabbits are (nearly) silent, so they have none. */
-  soundAudioUrl?: string
-  imageUrl: string
-  coPlayTip: string
-  /** YouTube video IDs — each one checked to exist and allow embedding. */
-  videos: string[]
-}
+import type { Item } from './types'
 
 // Grid order. Image + sound sources and licenses are listed in CREDITS.md.
-export const ANIMALS: AnimalItem[] = [
+export const ANIMALS: Item[] = [
   {
     id: 'cow',
     nameArabic: 'بقرة',
@@ -136,33 +125,3 @@ export const ANIMALS: AnimalItem[] = [
     ],
   },
 ]
-
-export const ANIMALS_DATA: Record<string, AnimalItem> = Object.fromEntries(
-  ANIMALS.map((animal) => [animal.id, animal]),
-)
-
-// Last video shown per animal, so the same one never plays twice in a row —
-// whether via "فيديو تاني" or by going back and tapping the animal again.
-const lastPlayedVideoMap: Record<string, string> = {}
-
-/** Pure pick: a random video for the animal, avoiding the last one played. */
-export function getRandomVideoForAnimal(animalId: string): string {
-  const animal = ANIMALS_DATA[animalId]
-  if (!animal || animal.videos.length === 0) return ''
-
-  if (animal.videos.length === 1) return animal.videos[0]
-
-  const lastVideo = lastPlayedVideoMap[animalId]
-  const eligibleVideos = animal.videos.filter((id) => id !== lastVideo)
-
-  const randomIndex = Math.floor(Math.random() * eligibleVideos.length)
-  return eligibleVideos[randomIndex]
-}
-
-/**
- * Records the video actually on screen. Kept separate from the pick (and
- * idempotent) so React StrictMode's double-invoked initializers can't desync it.
- */
-export function markVideoPlayed(animalId: string, videoId: string): void {
-  lastPlayedVideoMap[animalId] = videoId
-}

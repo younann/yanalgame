@@ -87,7 +87,7 @@ function loadYouTubeApi(): Promise<YTNamespace> {
 export function useYouTubePlayer(
   containerRef: RefObject<HTMLDivElement | null>,
   videoId: string,
-  enabled = true,
+  { enabled = true, interactive = true }: { enabled?: boolean; interactive?: boolean } = {},
 ) {
   const playerRef = useRef<YTPlayer | null>(null)
   const readyRef = useRef(false)
@@ -126,13 +126,15 @@ export function useYouTubePlayer(
           height: '100%',
           playerVars: {
             autoplay: 1,
-            controls: 1,
+            // Kid mode hides YouTube's UI entirely (it links out to youtube.com).
+            controls: interactive ? 1 : 0,
+            disablekb: interactive ? 0 : 1,
             rel: 0,
             modestbranding: 1,
             playsinline: 1,
             mute: IS_IOS ? 1 : 0,
             iv_load_policy: 3, // no annotations
-            fs: 1,
+            fs: interactive ? 1 : 0,
             hl: 'ar',
           },
           events: {
@@ -171,7 +173,7 @@ export function useYouTubePlayer(
       playerRef.current = null
       host.replaceChildren()
     }
-  }, [containerRef, enabled])
+  }, [containerRef, enabled, interactive])
 
   useEffect(() => {
     latestVideoRef.current = videoId

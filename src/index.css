@@ -38,41 +38,59 @@ img {
   -webkit-user-drag: none;
 }
 
-/* ───────────── Home grid ─────────────
-   Always sized so all 8 animals fit the screen without scrolling:
-   portrait → 2 columns × 4 rows, landscape → 4 columns × 2 rows. */
-.animal-grid {
+/* ───────────── Photo grids (home categories + item grids) ─────────────
+   Sized so every tile fits the screen without scrolling. A tile is
+   (height − padding − header − gaps) / rows; the grid is cols tiles wide.
+   Portrait: 2 columns. Landscape (tablet / desktop / phone sideways): 4. */
+.tile-wrap {
   --pad: 1rem;
   --gap: 1rem;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  --cols: 2;
+  --rows: 4;
+  --header: 0px;
+  --max: 28rem;
+  --tile: calc((100dvh - 2 * var(--pad) - var(--header) - (var(--rows) - 1) * var(--gap)) / var(--rows));
+  display: flex;
+  flex-direction: column;
   gap: var(--gap);
   width: 100%;
-  max-width: min(28rem, calc((100dvh - 2 * var(--pad) - 3 * var(--gap)) / 2 + var(--gap)));
+  max-width: min(var(--max), calc(var(--cols) * var(--tile) + (var(--cols) - 1) * var(--gap)));
+}
+.tile-wrap.has-header {
+  --header: calc(4rem + var(--gap));
+}
+.tile-wrap.categories {
+  --rows: 2;
+}
+.tile-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+  gap: var(--gap);
 }
 
-/* Tablet portrait: 2 big columns; card = (height − padding − 3 gaps) / 4 */
 @media (min-width: 600px) and (orientation: portrait) {
-  .animal-grid {
+  .tile-wrap {
     --pad: 1.5rem;
     --gap: 1.5rem;
-    max-width: min(44rem, calc((100dvh - 2 * var(--pad) - 3 * var(--gap)) / 2 + var(--gap)));
+    --max: 44rem;
   }
 }
 
-/* Landscape (tablet / desktop / phone sideways): 4 columns;
-   card = (height − padding − 1 gap) / 2 */
 @media (min-width: 600px) and (orientation: landscape) {
-  .animal-grid {
+  .tile-wrap {
     --pad: 1.5rem;
     --gap: 1.5rem;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    max-width: min(68rem, calc(2 * (100dvh - 2 * var(--pad) - var(--gap)) + 3 * var(--gap)));
+    --cols: 4;
+    --rows: 2;
+    --max: 68rem;
+  }
+  .tile-wrap.categories {
+    --rows: 1;
   }
 }
 
 @media (min-width: 600px) and (orientation: landscape) and (max-height: 540px) {
-  .animal-grid {
+  .tile-wrap {
     --pad: 1rem;
     --gap: 1rem;
   }
@@ -152,6 +170,23 @@ img {
     min-height: 60px;
     font-size: 1.375rem;
   }
+}
+
+/* Parent button: a ring fills up while it's being held. */
+@property --hold {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 0%;
+}
+@keyframes hold-fill {
+  to {
+    --hold: 100%;
+  }
+}
+.hold-ring {
+  background: conic-gradient(var(--color-play) var(--hold), transparent 0);
+  mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 3px));
+  animation: hold-fill var(--hold-ms, 2s) linear forwards;
 }
 
 @keyframes hop {

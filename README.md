@@ -1,8 +1,20 @@
 # يلا نحكي — Toddler Animal Video Explorer
 
-A distraction-free animal video player for ~2-year-olds: a text-free 2-column photo grid →
-tap an animal → a real-animal YouTube video, a big "فيديو تاني" button (never the same video
-twice in a row), the animal's real sound, and a co-play tip for the parent.
+A distraction-free video explorer for ~2-year-olds. Home shows 4 text-free photo tiles —
+animals, transport, food, toys — each opening a grid of 8 real photos. Tap one → a real-footage
+YouTube video, a big "فيديو تاني" button (never the same video twice in a row), the real sound
+(or the Arabic word spoken aloud), and a co-play tip for the parent.
+
+## Kid lock (parent PIN)
+
+Press and **hold the faint 🔒 in the bottom corner for 2 seconds** → set a 4-digit parent PIN.
+While locked:
+- YouTube's own UI is disabled (no links out to youtube.com); the app shows its own play/pause.
+- Back button / swipe-back can't leave the app; closing the tab asks first (desktop/Android).
+- Desktop / Android go fullscreen (Chrome also keeps Esc from exiting).
+
+A web app **cannot** block the Home button/gesture — pair it with **Guided Access** (iPhone/iPad)
+or **Screen Pinning** (Android). Instructions are in the parent panel.
 
 ```bash
 npm install
@@ -23,8 +35,8 @@ npm run build    # static output in dist/
 
 ## Editing the content
 
-Everything lives in `src/data/animals.ts`. To add a video, append its YouTube ID to the
-animal's `videos` list. Before adding one, check it exists and allows embedding:
+Content lives in `src/data/{animals,transport,food,toys}.ts`; categories are wired up in
+`src/data/catalog.ts`. To add a video, append its YouTube ID to the item's `videos` list. Before adding one, check it exists and allows embedding:
 
 ```bash
 curl -s "https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=VIDEO_ID&format=json"
